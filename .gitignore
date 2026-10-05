@@ -1,0 +1,6 @@
+uploads/*
+!uploads/.gitkeep
+data/db.json
+data/certs/
+node_modules/
+

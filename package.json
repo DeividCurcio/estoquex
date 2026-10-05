@@ -1,0 +1,17 @@
+{
+  "name": "click-vest-estoque",
+  "version": "1.0.0",
+  "description": "Sistema local para cadastrar peças com foto e código de barras, ler o Eyoyo via Bluetooth e controlar entrada, saída, envio e contagem.",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "selfsigned": "^5.5.0"
+  }
+}
