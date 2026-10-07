@@ -9,6 +9,8 @@ try { process.loadEnvFile(path.join(__dirname, ".env")); } catch {}
 
 const PORT = process.env.PORT || 3000;
 const HTTPS_PORT = process.env.HTTPS_PORT || 3443;
+const CEREBRAS_API_KEY = process.env.CEREBRAS_API_KEY || "";
+const CEREBRAS_MODEL = process.env.CEREBRAS_MODEL || "llama-3.3-70b";
 const ROOT = __dirname;
 const PUBLIC = path.join(ROOT, "public");
 const UPLOADS = path.join(ROOT, "uploads");
@@ -180,6 +182,18 @@ const MIME = {
   ".json": "application/json; charset=utf-8",
   ".ico": "image/x-icon",
 };
+
+async function callCerebras(messages) {
+  if (!CEREBRAS_API_KEY) throw new Error("CEREBRAS_API_KEY não configurada.");
+  const response = await fetch("https://api.cerebras.ai/v1/chat/completions", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: "Bearer " + CEREBRAS_API_KEY },
+    body: JSON.stringify({ model: CEREBRAS_MODEL, messages, temperature: 0.2 }),
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(data?.error?.message || "Falha ao chamar a Cerebras.");
+  return data?.choices?.[0]?.message?.content || "";
+}
 
 function serveFile(res, filePath) {
   if (!fs.existsSync(filePath) || !fs.statSync(filePath).isFile()) {
@@ -384,6 +398,17 @@ async function handleRequest(req, res) {
         httpsPort: HTTPS_ENABLED ? Number(HTTPS_PORT) : null,
         addresses: localIPv4s(),
       });
+    }
+
+    if (pathname === "/api/cerebras" && req.method === "POST") {
+      const body = await readBody(req);
+      const prompt = String(body.prompt || "").trim();
+      if (!prompt) return send(res, 400, { error: "Informe um prompt." });
+      const reply = await callCerebras([
+        { role: "system", content: String(body.system || "Você é um assistente útil.") },
+        { role: "user", content: prompt },
+      ]);
+      return send(res, 200, { reply });
     }
 
     if (pathname === "/api/backup" && req.method === "GET") {
