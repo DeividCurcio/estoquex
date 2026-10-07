@@ -18,6 +18,28 @@ O leitor Eyoyo, no modo Bluetooth HID, se comporta como teclado. Ele digita o c�
 - Histórico e backup em JSON
 - Layout responsivo (funciona bem no celular, tablet e computador)
 
+## Publicar na internet (Render) e usar no celular
+
+Para abrir o sistema em qualquer lugar pelo link (e não só na rede Wi-Fi da loja), publique-o no Render:
+
+1. Crie uma conta em https://render.com e conecte seu GitHub.
+2. Clique em **New +** → **Blueprint** e escolha este repositório. O Render lê o arquivo `render.yaml` e configura tudo (build `npm install`, start `npm start`, disco persistente em `/var/data`).
+3. Aguarde o deploy terminar. O Render mostra o endereço, algo como `https://estoquex.onrender.com`. Esse é o link do seu aplicativo.
+4. Abra esse link no navegador do celular. Como é HTTPS, a câmera para ler código de barras também funciona.
+
+### Persistência dos dados
+
+Use a variável `DATA_DIR` para definir onde ficam o banco (`db.json`) e as fotos (`uploads/`). No `render.yaml` ela aponta para `/var/data`, que é um **disco persistente**: sem ele, os dados somem a cada novo deploy. Discos persistentes exigem plano pago no Render (o `render.yaml` usa `starter`). No plano gratuito não há disco, então os dados são apagados quando o serviço reinicia; faça backup em JSON com frequência (`/api/backup`).
+
+Outras variáveis: `PORT` (padrão 3000), `HOST` (padrão `0.0.0.0`) e `DISABLE_HTTPS=1` (desliga o HTTPS local autoassinado, que não é necessário em hospedagem). Há também um `Procfile` para outras plataformas.
+
+### Instalar na tela inicial do celular
+
+- **Android (Chrome):** abra o link, toque no menu ⋮ e em **Instalar app** / **Adicionar à tela inicial**.
+- **iPhone (Safari):** abra o link, toque em Compartilhar e em **Adicionar à Tela de Início**.
+
+O app abre em tela cheia, como um aplicativo. Ele precisa de internet para acessar os dados do estoque.
+
 ## Como abrir no VS Code
 
 1. Instale o Node.js 18 ou mais novo: https://nodejs.org

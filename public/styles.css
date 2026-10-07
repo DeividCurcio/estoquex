@@ -194,6 +194,7 @@ input:focus, select:focus, textarea:focus { border-color: #d7a3b1; box-shadow: 0
   .actions { gap: 10px; justify-content: space-between; }
   .action { width: 44%; }
   .icon { width: 58px; height: 58px; border-radius: 18px; }
+  .table { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
   .top h2 { font-size: 22px; }
   .item { grid-template-columns: 52px 1fr; }
   .item .row { grid-column: 1 / -1; justify-content: flex-start; }
