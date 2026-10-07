@@ -3,4 +3,5 @@ uploads/*
 data/db.json
 data/certs/
 node_modules/
+.env
 

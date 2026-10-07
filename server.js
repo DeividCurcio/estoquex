@@ -5,6 +5,8 @@ const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
 
+try { process.loadEnvFile(path.join(__dirname, ".env")); } catch {}
+
 const PORT = process.env.PORT || 3000;
 const HTTPS_PORT = process.env.HTTPS_PORT || 3443;
 const ROOT = __dirname;
