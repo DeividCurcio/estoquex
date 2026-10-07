@@ -43,6 +43,9 @@ A câmera só funciona em um endereço seguro (HTTPS) ou em `localhost`. Por iss
    - `Rede (celular/tablet, use HTTPS):` [https://192.168.1.8:3443](https://192.168.1.8:3443)
 2. No celular, conecte na mesma rede Wi-Fi do computador.
 3. Abra o navegador do celular e digite o endereço HTTPS mostrado no terminal (o IP pode mudar a cada rede).
+   
+Esse endereço é da rede local: só abre enquanto o servidor estiver rodando no computador e o celular estiver conectado à mesma rede Wi-Fi.
+
 4. O navegador vai avisar que o certificado não é confiável ("conexão não é privada" ou parecido). Isso é esperado, porque é um certificado criado pelo próprio sistema, só para uso local. Toque em "Avançado" e depois em "Acessar mesmo assim" (o texto muda conforme o navegador).
 5. Pronto: o sistema abre normalmente. Toque no botão de câmera (ícone de câmera) ao lado do campo de código em qualquer tela de leitura ou no cadastro, permita o uso da câmera quando o navegador perguntar, e aponte para o código de barras.
 6. Para fechar o leitor de câmera, toque em "Fechar" ou aperte Esc no computador.
