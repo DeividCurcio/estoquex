@@ -204,7 +204,7 @@ function cadastrar() {
         <div class="photo-box" id="photo-box">
           ${state.photo ? `<img src="${state.photo}" alt="prévia" />` : p?.photo ? `<img src="${p.photo}" alt="" />` : `<div><strong>Clique para escolher a foto</strong><p class="muted">JPG ou PNG, de preferência fundo claro</p></div>`}
         </div>
-        <input id="photo-input" type="file" accept="image/*" capture="environment" hidden />
+        <input id="photo-input" type="file" accept="image/jpeg,image/png,image/*" hidden />
         <p class="muted">A foto fica salva neste computador, na pasta uploads. Use a câmera do celular para tirar a foto direto daqui.</p>
       </div>
     </form>`;
@@ -610,7 +610,7 @@ document.addEventListener("click", async (e) => {
     state.draft = [];
     return render();
   }
-  if (e.target.id === "photo-box") $("#photo-input")?.click();
+  if (e.target.closest("#photo-box")) $("#photo-input")?.click();
   if (e.target.id === "delete-product" && state.editing) {
     if (!confirm("Excluir este produto da lista?")) return;
     await api(`/api/products/${state.editing}`, { method: "DELETE" });
