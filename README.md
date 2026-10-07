@@ -40,7 +40,7 @@ A câmera só funciona em um endereço seguro (HTTPS) ou em `localhost`. Por iss
 
 1. Rode `node server.js` no computador. O terminal mostra duas opções, por exemplo:
    - `Local (neste computador): http://localhost:3000`
-   - `Rede (celular/tablet, use HTTPS): https://192.168.1.8:3443`
+   - `Rede (celular/tablet, use HTTPS):` [https://192.168.1.8:3443](https://192.168.1.8:3443)
 2. No celular, conecte na mesma rede Wi-Fi do computador.
 3. Abra o navegador do celular e digite o endereço HTTPS mostrado no terminal (o IP pode mudar a cada rede).
 4. O navegador vai avisar que o certificado não é confiável ("conexão não é privada" ou parecido). Isso é esperado, porque é um certificado criado pelo próprio sistema, só para uso local. Toque em "Avançado" e depois em "Acessar mesmo assim" (o texto muda conforme o navegador).
