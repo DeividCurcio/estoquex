@@ -9,6 +9,7 @@ const NAV = [
   ["lista", "Lista de estoque"],
   ["contagem", "Contagem de estoque"],
   ["historico", "Histórico"],
+  ["chat", "Chat / Assistente IA"],
 ];
 
 const CATEGORIES = ["Sutiã", "Calcinha", "Conjunto", "Camisola", "Body", "Meia", "Pijama", "Acessório", "Outro"];
@@ -25,6 +26,8 @@ const state = {
   photo: null,
   query: "",
   selectedId: null,
+  chat: [],
+  chatBusy: false,
 };
 
 const $ = (sel) => document.querySelector(sel);
@@ -363,6 +366,78 @@ function historico() {
     </section>`;
 }
 
+const CHAT_SYSTEM = "Você é o assistente do EstoqueX, um app de controle de estoque de loja de lingerie. Responda em português, de forma objetiva.";
+const CHAT_SUGGESTIONS = [
+  "Me ajude a resumir a situação do estoque.",
+  "Gere uma descrição de produto para um conjunto de lingerie.",
+  "Escreva uma mensagem para um cliente sobre o pedido enviado.",
+  "Explique como usar a contagem de estoque.",
+];
+
+function chatBubbles() {
+  if (!state.chat.length) return `<p class="muted">Envie uma pergunta ou escolha uma sugestão.</p>`;
+  return state.chat.map((m) => `<div class="chat-msg ${m.role}"><div class="chat-bubble">${esc(m.content)}</div></div>`).join("")
+    + (state.chatBusy ? `<div class="chat-msg assistant"><div class="chat-bubble muted">Pensando...</div></div>` : "");
+}
+
+function chat() {
+  return `
+    <section class="panel">
+      <h3>Assistente IA</h3>
+      <div class="chat-suggestions">
+        ${CHAT_SUGGESTIONS.map((t, i) => `<button type="button" class="btn-line" data-chat-suggest="${i}">${esc(t)}</button>`).join("")}
+      </div>
+      <div id="chat-thread" class="chat-thread" aria-live="polite">${chatBubbles()}</div>
+      <form id="chat-form" class="chat-form">
+        <textarea id="chat-input" rows="2" placeholder="Digite sua mensagem..." ${state.chatBusy ? "disabled" : ""}></textarea>
+        <button class="btn" id="chat-send" ${state.chatBusy ? "disabled" : ""}>${state.chatBusy ? "Enviando..." : "Enviar"}</button>
+      </form>
+    </section>`;
+}
+
+function refreshChat() {
+  const thread = $("#chat-thread");
+  if (!thread) return;
+  thread.innerHTML = chatBubbles();
+  thread.scrollTop = thread.scrollHeight;
+  const input = $("#chat-input"), btn = $("#chat-send");
+  input.disabled = btn.disabled = state.chatBusy;
+  btn.textContent = state.chatBusy ? "Enviando..." : "Enviar";
+}
+
+async function sendChat(text) {
+  const prompt = String(text || "").trim();
+  if (!prompt || state.chatBusy) return;
+  state.chat.push({ role: "user", content: prompt });
+  state.chatBusy = true;
+  const input = $("#chat-input");
+  if (input) input.value = "";
+  refreshChat();
+  try {
+    const data = await api("/api/cerebras", { method: "POST", body: { prompt, system: CHAT_SYSTEM } });
+    state.chat.push({ role: "assistant", content: data.reply || "(sem resposta)" });
+  } catch (err) {
+    toast(err.message);
+  } finally {
+    state.chatBusy = false;
+    refreshChat();
+    const el = $("#chat-input");
+    if (el) el.focus();
+  }
+}
+
+function bindChat() {
+  $("#chat-form").addEventListener("submit", (e) => { e.preventDefault(); sendChat($("#chat-input").value); });
+  $("#chat-input").addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendChat(e.target.value); }
+  });
+  view().querySelectorAll("[data-chat-suggest]").forEach((b) => {
+    b.addEventListener("click", () => sendChat(CHAT_SUGGESTIONS[b.dataset.chatSuggest]));
+  });
+  const thread = $("#chat-thread");
+  thread.scrollTop = thread.scrollHeight;
+}
+
 function render() {
   const titles = {
     home: ["Início", "Pedidos, estoque e cadastro com foto"],
@@ -375,16 +450,18 @@ function render() {
     lista: ["Lista de estoque", "Todas as peças cadastradas"],
     contagem: ["Contagem de estoque", "Inventário pela leitura"],
     historico: ["Histórico", "Entradas, saídas e envios"],
+    chat: ["Chat / Assistente IA", "Tire dúvidas e gere textos com IA"],
   };
   const [title, subtitle] = titles[state.page] || titles.home;
   $("#title").textContent = title;
   $("#subtitle").textContent = subtitle;
   renderNav();
-  const pages = { home, cadastrar, buscar, enviar, prova, entrada: () => stockForm("entrada"), saida: () => stockForm("saida"), lista, contagem, historico };
+  const pages = { home, cadastrar, buscar, enviar, prova, entrada: () => stockForm("entrada"), saida: () => stockForm("saida"), lista, contagem, historico, chat };
   view().innerHTML = (pages[state.page] || home)();
   const scan = $("#scan-input");
   if (scan) scan.focus();
   if (state.page === "cadastrar") refreshBarcodePreview();
+  if (state.page === "chat") bindChat();
   closeSide();
 }
 
