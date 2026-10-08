@@ -13,11 +13,14 @@ const CEREBRAS_API_KEY = process.env.CEREBRAS_API_KEY || "";
 const CEREBRAS_MODEL = process.env.CEREBRAS_MODEL || "llama-3.3-70b";
 const ROOT = __dirname;
 const PUBLIC = path.join(ROOT, "public");
-const UPLOADS = path.join(ROOT, "uploads");
-const DATA_FILE = path.join(ROOT, "data", "db.json");
-const CERT_DIR = path.join(ROOT, "data", "certs");
+const DATA_DIR = process.env.DATA_DIR ? path.resolve(process.env.DATA_DIR) : path.join(ROOT, "data");
+const UPLOADS = process.env.DATA_DIR ? path.join(DATA_DIR, "uploads") : path.join(ROOT, "uploads");
+const DATA_FILE = path.join(DATA_DIR, "db.json");
+const CERT_DIR = path.join(DATA_DIR, "certs");
+const HOST = process.env.HOST || "0.0.0.0";
+const DISABLE_HTTPS = ["1", "true"].includes(String(process.env.DISABLE_HTTPS || "").toLowerCase());
 
-fs.mkdirSync(path.join(ROOT, "data"), { recursive: true });
+fs.mkdirSync(DATA_DIR, { recursive: true });
 fs.mkdirSync(UPLOADS, { recursive: true });
 fs.mkdirSync(CERT_DIR, { recursive: true });
 
@@ -181,6 +184,7 @@ const MIME = {
   ".webp": "image/webp",
   ".json": "application/json; charset=utf-8",
   ".ico": "image/x-icon",
+  ".webmanifest": "application/manifest+json; charset=utf-8",
 };
 
 async function callCerebras(messages) {
@@ -207,7 +211,12 @@ function serveFile(res, filePath) {
 
 async function handleRequest(req, res) {
   const url = new URL(req.url, `http://${req.headers.host}`);
-  const pathname = decodeURIComponent(url.pathname);
+  let pathname;
+  try {
+    pathname = decodeURIComponent(url.pathname);
+  } catch {
+    return send(res, 400, "Requisição inválida", "text/plain; charset=utf-8");
+  }
 
   try {
     if (pathname === "/api/health") {
@@ -427,7 +436,7 @@ async function handleRequest(req, res) {
 
     const rel = pathname === "/" ? "index.html" : pathname.replace(/^\/+/, "");
     const filePath = path.normalize(path.join(PUBLIC, rel));
-    if (!filePath.startsWith(PUBLIC)) return send(res, 403, "Proibido", "text/plain; charset=utf-8");
+    if (filePath !== PUBLIC && !filePath.startsWith(PUBLIC + path.sep)) return send(res, 403, "Proibido", "text/plain; charset=utf-8");
     return serveFile(res, filePath);
   } catch (error) {
     return send(res, 500, { error: error.message || "Erro interno." });
@@ -437,18 +446,19 @@ async function handleRequest(req, res) {
 let HTTPS_ENABLED = false;
 
 const httpServer = http.createServer(handleRequest);
-httpServer.listen(PORT, () => {
+httpServer.listen(PORT, HOST, () => {
   console.log("");
   console.log("  Click Vest Lingerie — controle de estoque");
   console.log(`  Abra no navegador: http://localhost:${PORT}`);
 });
 
 (async () => {
+  if (DISABLE_HTTPS) return;
   const cert = await loadOrCreateCert();
   HTTPS_ENABLED = !!cert;
   if (HTTPS_ENABLED) {
     const httpsServer = https.createServer(cert, handleRequest);
-    httpsServer.listen(HTTPS_PORT, () => {
+    httpsServer.listen(HTTPS_PORT, HOST, () => {
       const ips = localIPv4s();
       console.log(`  Leitor de câmera pelo celular (mesma rede Wi-Fi):`);
       if (ips.length) {

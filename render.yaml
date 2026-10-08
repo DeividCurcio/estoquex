@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: estoquex
+    runtime: node
+    plan: starter
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: 20
+      - key: DATA_DIR
+        value: /var/data
+      - key: DISABLE_HTTPS
+        value: "1"
+    disk:
+      name: estoque-dados
+      mountPath: /var/data
+      sizeGB: 1

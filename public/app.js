@@ -831,3 +831,9 @@ document.addEventListener("keydown", (e) => {
 load().then(render).catch((err) => {
   view().innerHTML = `<div class="panel">Não foi possível carregar. Rode o servidor com <strong>node server.js</strong>.<br>${esc(err.message)}</div>`;
 });
+
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("/sw.js").catch(() => {});
+  });
+}
