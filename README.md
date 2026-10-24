@@ -56,6 +56,28 @@ Os dados ficam em `data/db.json`. As fotos ficam em `uploads/`.
 
 Na primeira vez que o servidor rodar, ele instala a dependência `selfsigned` (já vem configurada no `package.json`). Se faltar, rode `npm install` antes do passo 3.
 
+## Assistente de IA
+
+O menu **Assistente de IA** permite perguntar sobre os produtos e os dados recentes da loja. Ele fica desativado por padrão e não faz chamadas nem gera custos até que URL, modelo e chave de API estejam configurados.
+
+O servidor aceita provedores com API compatível com o formato OpenAI Chat Completions. Copie `.env.example` para `.env` e preencha:
+
+```env
+AI_BASE_URL=https://seu-provedor/v1
+AI_MODEL=identificador-do-modelo
+AI_API_KEY=sua-chave
+```
+
+Também é aceito `CEREBRAS_API_KEY` no lugar de `AI_API_KEY`. A chave fica somente no servidor; não a coloque no código do navegador nem compartilhe o arquivo `.env`. Reinicie `node server.js` depois de configurar. O assistente só é ativado quando as três configurações estão preenchidas. A leitura de `.env` usa o recurso do Node.js; use Node 20.6 ou mais novo para carregá-lo automaticamente.
+
+Em cada pergunta, o servidor envia ao provedor os produtos ativos (incluindo preço e custo), os 100 movimentos e os 30 pedidos mais recentes, além das últimas 12 mensagens da conversa. Fotos, dados de clientes e notas de pedidos não são enviados. A conversa fica apenas na memória da página e some ao recarregá-la. O assistente é somente consultivo: não altera estoque nem executa operações.
+
+**Privacidade e acesso:** o app ainda não tem login. Não exponha o servidor diretamente à internet; qualquer pessoa com acesso à rede onde ele está rodando pode acessar as telas e, quando configurado, usar o assistente. Confira os termos de retenção e uso de dados do provedor antes de ativá-lo.
+
+## Sobre o NeMo AutoModel
+
+O [NeMo AutoModel (cobertura LLM, v0.5.0)](https://github.com/NVIDIA-NeMo/Automodel/blob/v0.5.0/docs/model-coverage/llm/index.md) indicado na documentação NVIDIA é uma opção para executar e ajustar modelos compatíveis, incluindo fine-tuning com PEFT/LoRA ou SFT. Ele não é, por si só, um serviço de inferência que o app possa chamar sem implantação. Esta primeira etapa conecta o app a uma API hospedada e usa os dados atuais como contexto; **não treina nem ajusta um modelo**. Para a etapa de fine-tuning serão necessários exemplos de perguntas e respostas revisados e um servidor com GPU NVIDIA/CUDA compatível. Não envie o banco inteiro como dataset de treinamento sem antes preparar, revisar e remover dados desnecessários.
+
 ## Usar a câmera do celular para ler código de barras
 
 A câmera só funciona em um endereço seguro (HTTPS) ou em `localhost`. Por isso o servidor também sobe uma versão HTTPS na rede local, com um certificado próprio (autoassinado).

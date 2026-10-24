@@ -10,6 +10,7 @@ const NAV = [
   ["contagem", "Contagem de estoque"],
   ["historico", "Histórico"],
   ["chat", "Chat / Assistente IA"],
+  ["assistente", "Assistente de IA"],
 ];
 
 const CATEGORIES = ["Sutiã", "Calcinha", "Conjunto", "Camisola", "Body", "Meia", "Pijama", "Acessório", "Outro"];
@@ -28,6 +29,9 @@ const state = {
   selectedId: null,
   chat: [],
   chatBusy: false,
+  assistantMessages: [],
+  assistantBusy: false,
+  assistantConfigured: false,
 };
 
 const $ = (sel) => document.querySelector(sel);
@@ -82,6 +86,7 @@ async function load() {
   state.products = data.products;
   state.movements = data.movements;
   state.orders = data.orders;
+  state.assistantConfigured = data.assistantConfigured;
 }
 function productByBarcode(code) {
   return state.products.find((p) => p.barcode === String(code).trim());
@@ -395,6 +400,34 @@ function chat() {
     </section>`;
 }
 
+function assistant() {
+  const messages = state.assistantMessages.map((message) => `
+    <div class="chat-message ${message.role === "user" ? "user" : "assistant"}">
+      <strong>${message.role === "user" ? "Você" : "Assistente"}</strong>
+      <p>${esc(message.content).replace(/\n/g, "<br>")}</p>
+    </div>`).join("");
+  return `
+    <section class="panel assistant-panel">
+      <h3>Assistente de estoque</h3>
+      <p class="muted">Pergunte sobre produtos, estoque, custos, preços, movimentos e pedidos. A consulta é somente informativa e não altera os dados.</p>
+      ${state.assistantConfigured
+        ? `<p class="assistant-notice">As perguntas e um resumo dos dados da loja serão enviados ao provedor configurado. O histórico desta conversa fica apenas nesta tela.</p>`
+        : `<p class="assistant-notice">Assistente desativado. Para ativar, configure AI_BASE_URL, AI_MODEL e AI_API_KEY no arquivo .env e reinicie o servidor. Nenhum dado será enviado enquanto estiver desativado.</p>`}
+      <div class="chat-messages" id="assistant-messages" aria-live="polite">
+        ${messages || `<div class="empty">Ainda não há mensagens. Faça uma pergunta sobre o estoque.</div>`}
+        ${state.assistantBusy ? `<div class="chat-message assistant"><strong>Assistente</strong><p>Consultando a IA…</p></div>` : ""}
+      </div>
+      <form id="assistant-form" class="assistant-form">
+        <label for="assistant-question">Sua pergunta</label>
+        <textarea id="assistant-question" name="question" maxlength="2000" placeholder="Ex.: Quais produtos estão abaixo do estoque mínimo?" required ${!state.assistantConfigured || state.assistantBusy ? "disabled" : ""}></textarea>
+        <div class="row assistant-controls">
+          <small class="muted">Até 2.000 caracteres. A IA recebe as últimas 12 mensagens, os produtos ativos, os 100 movimentos e os 30 pedidos mais recentes.</small>
+          <button class="btn rose" type="submit" ${!state.assistantConfigured || state.assistantBusy ? "disabled" : ""}>${state.assistantBusy ? "Aguarde…" : "Perguntar"}</button>
+        </div>
+      </form>
+    </section>`;
+}
+
 function refreshChat() {
   const thread = $("#chat-thread");
   if (!thread) return;
@@ -451,12 +484,13 @@ function render() {
     contagem: ["Contagem de estoque", "Inventário pela leitura"],
     historico: ["Histórico", "Entradas, saídas e envios"],
     chat: ["Chat / Assistente IA", "Tire dúvidas e gere textos com IA"],
+    assistente: ["Assistente de IA", "Perguntas sobre os dados da loja"],
   };
   const [title, subtitle] = titles[state.page] || titles.home;
   $("#title").textContent = title;
   $("#subtitle").textContent = subtitle;
   renderNav();
-  const pages = { home, cadastrar, buscar, enviar, prova, entrada: () => stockForm("entrada"), saida: () => stockForm("saida"), lista, contagem, historico, chat };
+  const pages = { home, cadastrar, buscar, enviar, prova, entrada: () => stockForm("entrada"), saida: () => stockForm("saida"), lista, contagem, historico, chat, assistente: assistant };
   view().innerHTML = (pages[state.page] || home)();
   const scan = $("#scan-input");
   if (scan) scan.focus();
@@ -749,6 +783,29 @@ document.addEventListener("input", (e) => {
 });
 
 document.addEventListener("submit", async (e) => {
+  if (e.target.id === "assistant-form") {
+    e.preventDefault();
+    if (state.assistantBusy || !state.assistantConfigured) return;
+    const question = $("#assistant-question").value.trim();
+    if (!question) return;
+    state.assistantMessages.push({ role: "user", content: question });
+    state.assistantMessages = state.assistantMessages.slice(-20);
+    state.assistantBusy = true;
+    render();
+    try {
+      const result = await api("/api/assistant/chat", {
+        method: "POST",
+        body: { messages: state.assistantMessages.slice(-12) },
+      });
+      state.assistantMessages.push({ role: "assistant", content: result.answer });
+      state.assistantMessages = state.assistantMessages.slice(-20);
+    } catch (err) {
+      toast(err.message);
+    } finally {
+      state.assistantBusy = false;
+      render();
+    }
+  }
   if (e.target.id === "product-form") {
     e.preventDefault();
     const data = formData(e.target);

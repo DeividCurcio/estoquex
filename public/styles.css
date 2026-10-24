@@ -169,13 +169,31 @@ input:focus, select:focus, textarea:focus { border-color: #d7a3b1; box-shadow: 0
 .table th, .table td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--line); font-size: 14px; }
 .empty { padding: 28px; text-align: center; color: var(--muted); }
 .search { max-width: 360px; }
+.assistant-panel > p { line-height: 1.5; }
+.assistant-notice {
+  padding: 12px 14px; border-radius: 12px; background: var(--rose-soft); color: #6b2739;
+  font-size: 13px; line-height: 1.45;
+}
+.chat-messages {
+  display: flex; flex-direction: column; gap: 10px; max-height: 52vh; overflow: auto;
+  padding: 10px 0 16px;
+}
+.chat-message { max-width: 88%; padding: 12px 14px; border-radius: 16px; line-height: 1.5; overflow-wrap: anywhere; }
+.chat-message p { margin: 4px 0 0; white-space: normal; }
+.chat-message strong { font-size: 12px; }
+.chat-message.user { align-self: flex-end; background: #1b1715; color: white; }
+.chat-message.assistant { align-self: flex-start; background: #f4f1ee; }
+.assistant-form textarea { min-height: 86px; }
+.assistant-controls { justify-content: space-between; margin-top: 10px; }
+.assistant-controls small { max-width: 640px; line-height: 1.45; }
+.assistant-form button:disabled { opacity: .55; cursor: not-allowed; }
 
 @media (max-width: 980px) {
   .app { grid-template-columns: 1fr; }
   .menu-toggle { display: flex; }
   .side {
     position: fixed; top: 0; left: 0; bottom: 0; width: 82%; max-width: 300px; z-index: 35;
-    transform: translateX(-105%); transition: transform .22s ease; box-shadow: 20px 0 40px rgba(0,0,0,.25);
+    overflow-y: auto; transform: translateX(-105%); transition: transform .22s ease; box-shadow: 20px 0 40px rgba(0,0,0,.25);
   }
   .side.open { transform: translateX(0); }
   .nav { flex-direction: column; overflow: visible; }
@@ -198,6 +216,7 @@ input:focus, select:focus, textarea:focus { border-color: #d7a3b1; box-shadow: 0
   .top h2 { font-size: 22px; }
   .item { grid-template-columns: 52px 1fr; }
   .item .row { grid-column: 1 / -1; justify-content: flex-start; }
+  .chat-message { max-width: 96%; }
 }
 
 .chat-suggestions { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
